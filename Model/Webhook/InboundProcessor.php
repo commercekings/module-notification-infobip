@@ -7,8 +7,8 @@ use CommerceKings\Notification\Api\StopListInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Messages to the shop's senders (Infobip forwards them as {"results": […]}): STOP and its synonyms, WhatsApp's "Stop
- * promotions" button and a Viber unsubscribe stop the number on its channel until it sends START
+ * Messages to the shop's senders (Infobip forwards them as {"results": […]}): STOP and its synonyms ("opt out",
+ * "STOP!!" too; see keyword()), WhatsApp's "Stop promotions" button and a Viber unsubscribe stop the number on its channel until it sends START
  * (StopListInterface::REASON_REPLY); START and its synonyms (and a Viber subscribe) lift it - removed subscriptions do
  * not come back. Anything else is left alone.
  */
@@ -48,6 +48,9 @@ class InboundProcessor
         $channel = Address::channel($hint, $result);
         $action = $this->action($result);
         if ($channel === null || $action === '') {
+            if ($action === '') {
+                $this->logger->info('CommerceKings_NotificationInfobip: unrecognized reply.'); // no number, no text
+            }
             return '';
         }
         $from = Address::number((string)($result['from'] ?? $result['sender'] ?? ''));
@@ -85,7 +88,17 @@ class InboundProcessor
                 return 'stop';
             }
         }
-        $word = strtoupper(trim((string)preg_replace('/[^\p{L}]+/u', ' ', $text)));
+        return $this->keyword($text);
+    }
+
+    /**
+     * The keyword of a reply: the whole message is exactly a keyword, ignoring case, spaces, hyphens, punctuation and
+     * emoji ("Opt-out!" is OPTOUT, "stop all" STOPALL) - the industry rule; "stop please" is none (the provider's own
+     * opt-out handling and the merchant cover those).
+     */
+    private function keyword(string $text): string
+    {
+        $word = (string)preg_replace('/[^\p{L}]+/u', '', mb_strtoupper($text, 'UTF-8'));
         return match (true) {
             in_array($word, self::STOP_WORDS, true) => 'stop',
             in_array($word, self::START_WORDS, true) => 'start',

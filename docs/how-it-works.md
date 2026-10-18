@@ -23,7 +23,8 @@ Start with the [README](../README.md).
 - **Webhooks** (`Controller\Webhook\Inbound`, `Report`; route `ckinfobip`): POST, JSON, authorized by the URL's token
   (`Model\Webhook\WebhookAuth`: an HMAC of the account's webhook secret per webhook; the account whose token matches,
   tried per website), 403 otherwise; 200 for every authorized request. `Model\Webhook\InboundProcessor` and
-  `ReportProcessor` map the results to Notification's `StopListInterface` (README table); `Address` adds the "+" and
+  `ReportProcessor` map the results to Notification's `StopListInterface` (README table; a reply that is exactly an
+  opt-out or START keyword, ignoring case, spaces and punctuation; other replies are logged as "unrecognized reply", without number or text); `Address` adds the "+" and
   takes the channel from the URL (else Infobip's `integrationType`). A number the stop list refuses
   (`\InvalidArgumentException`) is logged without the number.
 - **Quiet hours** (`Model\NumberZones`, Notification's `QuietHoursZoneInterface` for sms, whatsapp and viber): the

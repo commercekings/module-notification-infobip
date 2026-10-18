@@ -17,6 +17,7 @@ Email is built into Notification and works out of the box; this module adds text
 - **Three channels, one account.** Infobip SMS, WhatsApp (approved templates) and Viber, per website.
 - **STOP means stop.** STOP / START replies, WhatsApp's "Stop promotions" button and Viber unsubscribes keep
   Notification's stop list in step; numbers Infobip reports undeliverable for good are suppressed.
+  A reply counts when it is exactly an opt-out keyword, ignoring case, spaces and punctuation ("opt out", "STOP!!").
 - **Quiet hours in the recipient's time zone**, from the number (libphonenumber) – as US state laws such as Florida's
   FTSA require.
 - **Opt-in confirmation.** One message to a number's first sign-up, as US carriers require – never twice.

@@ -13,6 +13,7 @@ class ProcessorsTest extends TestCase
 {
     private array $calls = [];
     private array $warnings = [];
+    private array $infos = [];
 
     private function stopList(): StopListInterface
     {
@@ -34,6 +35,7 @@ class ProcessorsTest extends TestCase
     {
         $logger = $this->createStub(LoggerInterface::class);
         $logger->method('warning')->willReturnCallback(function ($message) { $this->warnings[] = $message; });
+        $logger->method('info')->willReturnCallback(function ($message) { $this->infos[] = $message; });
         return $logger;
     }
 
@@ -51,6 +53,28 @@ class ProcessorsTest extends TestCase
         ], 'sms'));
         $this->assertSame([['stop', 'sms', '+381601234567', StopListInterface::REASON_REPLY],
             ['resume', 'sms', '+381601234567']], $this->calls);
+    }
+
+    public function testOnlyAWholeReplyThatIsAKeywordCountsIgnoringCaseSpacesAndPunctuation(): void
+    {
+        foreach (['opt out', 'Opt-Out', 'OPT OUT!', 'optout', 'stop all', 'STOP ALL', 'STOP!!', 'stop.', ' Stop ',
+            'Stop 🛑', '🛑 stop', 'Revoke', 'stopall', 'Un-subscribe', 'cancel', 'QUIT!', 'e.n.d'] as $text) {
+            $this->assertSame('stop', $this->inbound([['from' => '381601234567', 'text' => $text]], 'sms')[0], $text);
+        }
+        foreach (['stop please', 'Stop texting me', 'Cancel my order', 'Unsubscribe me', 'opt out now', 'stopwatch',
+            "Don't stop", 'please stop the music', 'nonstop', 'opt', 'stopped', 'HELP', 'Yes stop', 'yes please',
+            'start now', 'Started', 'unstoppable', '🙂', ''] as $text) {
+            $this->assertSame('', $this->inbound([['from' => '381601234567', 'text' => $text]], 'sms')[0], $text);
+        }
+        foreach (['START', 'start!', ' Unstop ', 'yes', 'Yes!', 'YES 👍', 'un-stop'] as $text) {
+            $this->assertSame('start', $this->inbound([['from' => '381601234567', 'text' => $text]], 'sms')[0], $text);
+        }
+    }
+
+    public function testAnUnrecognizedReplyIsLoggedWithoutTheNumberOrText(): void
+    {
+        $this->assertSame([''], $this->inbound([['from' => '381601234567', 'text' => 'Where is my parcel?']], 'sms'));
+        $this->assertSame(['CommerceKings_NotificationInfobip: unrecognized reply.'], $this->infos);
     }
 
     public function testWhatsappStopPromotionsButtonAndViberSubscriptionEvents(): void
