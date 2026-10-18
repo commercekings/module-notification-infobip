@@ -73,7 +73,7 @@
                     <label>WhatsApp templates</label>
                     <frontend_model>CommerceKings\NotificationInfobip\Block\Adminhtml\Form\Field\TemplateMap</frontend_model>
                     <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
-                    <comment>Per notification type (e.g. cart_reminder_whatsapp, infobip_optin) and locale (e.g. de_DE, de, or empty for any): the approved template's name and language in Infobip, and the notification's variables for {{1}}, {{2}}, … (e.g. name, product, link).</comment>
+                    <comment>Per notification type (e.g. infobip_optin, or your own WhatsApp notification type) and locale (e.g. de_DE, de, or empty for any): the approved template's name and language in Infobip, and the notification's variables for {{1}}, {{2}}, … (e.g. store for infobip_optin).</comment>
                 </field>
             </group>
         </section>
