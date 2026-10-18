@@ -13,8 +13,6 @@ use CommerceKings\NotificationInfobip\Model\Config;
 use CommerceKings\NotificationInfobip\Model\Optin\Confirmation;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Store\Model\Store;
-use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 class ConfirmationTest extends TestCase
@@ -46,10 +44,7 @@ class ConfirmationTest extends TestCase
         });
         $config = $this->createStub(Config::class);
         $config->method('getOptinText')->willReturn('{{store}}: you are signed up. Reply STOP to stop.');
-        $store = $this->createStub(Store::class);
-        $store->method('getName')->willReturn('Acme');
-        $stores = $this->createStub(StoreManagerInterface::class);
-        $stores->method('getStore')->willReturn($store);
+        $config->method('getStoreName')->willReturn('Acme');
         $db = $this->createStub(AdapterInterface::class);
         $db->method('update')->willReturnCallback(function ($table, $data, $where) {
             $this->updates[] = [$data, $where];
@@ -57,7 +52,7 @@ class ConfirmationTest extends TestCase
         });
         $resource = $this->createStub(ResourceConnection::class);
         $resource->method('getConnection')->willReturn($db);
-        return new Confirmation($subscriptions, $state, $sender, $config, $stores, $resource);
+        return new Confirmation($subscriptions, $state, $sender, $config, $resource);
     }
 
     public function testOneServiceMessagePerNumberClaimedInTheDeliveryState(): void

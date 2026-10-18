@@ -7,6 +7,7 @@ use CommerceKings\Notification\Api\Channel;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 
 /** Admin: Stores > Configuration > CommerceKings > Notifications > Infobip (one account per website). */
@@ -100,6 +101,21 @@ class Config
             }
         }
         return $stores;
+    }
+
+    /**
+     * The brand in texts ({{store}}), the same rule as the other CommerceKings texts: the store view's Store Information
+     * name, else Magento's frontend name (the store's name).
+     */
+    public function getStoreName(int $storeId): string
+    {
+        $name = trim((string)$this->scopeConfig->getValue('general/store_information/name', ScopeInterface::SCOPE_STORE,
+            $storeId));
+        if ($name !== '') {
+            return $name;
+        }
+        $store = $this->stores->getStore($storeId);
+        return (string)($store instanceof Store ? $store->getFrontendName() : $store->getName());
     }
 
     private function value(string $field, int $storeId): string

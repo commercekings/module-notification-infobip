@@ -14,7 +14,6 @@ use CommerceKings\Notification\Exception\MessageSentException;
 use CommerceKings\NotificationInfobip\Model\Config;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Sql\Expression;
-use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * The opt-in confirmation (Notification type "infobip_optin", reference = the subscription id): one message per number
@@ -33,7 +32,6 @@ class Confirmation implements NotificationTypeInterface
         private readonly DeliveryStateInterface $state,
         private readonly SenderInterface $sender,
         private readonly Config $config,
-        private readonly StoreManagerInterface $stores,
         private readonly ResourceConnection $resource
     ) {
     }
@@ -56,7 +54,7 @@ class Confirmation implements NotificationTypeInterface
             return; // already confirmed (or another worker is sending it)
         }
         $storeId = $subscription->storeId;
-        $store = (string)$this->stores->getStore($storeId)->getName();
+        $store = $this->config->getStoreName($storeId);
         $text = strtr($this->config->getOptinText($storeId), ['{{store}}' => $store]);
         try {
             $this->sender->send(Delivery::text($storeId, $recipient['channel'], $recipient['recipient'],
