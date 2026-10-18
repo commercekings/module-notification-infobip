@@ -4,9 +4,15 @@ Works with Magento 2.4.4+ · PHP 8.1–8.5 · CommerceKings Notification · Info
 
 [![License](https://badgen.net/github/license/commercekings/module-notification-infobip)](LICENSE) [![Release](https://badgen.net/github/release/commercekings/module-notification-infobip)](https://github.com/commercekings/module-notification-infobip/releases) [![Checks](https://github.com/commercekings/module-notification-infobip/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/commercekings/module-notification-infobip/actions/workflows/checks.yml)
 
-**Text, WhatsApp and Viber messages through Infobip** for every CommerceKings notification on those channels – e.g.
-`commercekings/module-abandoned-cart-sms`. This module only talks to Infobip; consent, the stop list, quiet hours and
-the cooldown are Notification's.
+**Text, WhatsApp and Viber messages through Infobip** for every CommerceKings notification on those channels. This
+module only talks to Infobip; consent, the stop list, quiet hours and the cooldown are Notification's.
+
+Email is built into Notification and works out of the box; this module adds text, WhatsApp and Viber.
+**Works together with:**
+
+- [module-notification](https://github.com/commercekings/module-notification) – the base every notification runs on.
+- [module-abandoned-cart-sms](https://github.com/commercekings/module-abandoned-cart-sms) – text-message cart reminders, sent through Infobip.
+- [module-notification-twilio](https://github.com/commercekings/module-notification-twilio) – the alternative; one provider per channel.
 
 - **Three channels, one account.** Infobip SMS, WhatsApp (approved templates) and Viber, per website.
 - **STOP means stop.** STOP / START replies, WhatsApp's "Stop promotions" button and Viber unsubscribes keep
