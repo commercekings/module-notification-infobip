@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- one provider per channel: Infobip SMS, WhatsApp and Viber -->
+    <virtualType name="CommerceKingsInfobipSmsProvider" type="CommerceKings\NotificationInfobip\Model\Provider\InfobipProvider">
+        <arguments>
+            <argument name="code" xsi:type="string">infobip_sms</argument>
+            <argument name="label" xsi:type="string">Infobip SMS</argument>
+            <argument name="channel" xsi:type="const">CommerceKings\Notification\Api\Channel::SMS</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CommerceKingsInfobipWhatsappProvider" type="CommerceKings\NotificationInfobip\Model\Provider\InfobipProvider">
+        <arguments>
+            <argument name="code" xsi:type="string">infobip_whatsapp</argument>
+            <argument name="label" xsi:type="string">Infobip WhatsApp</argument>
+            <argument name="channel" xsi:type="const">CommerceKings\Notification\Api\Channel::WHATSAPP</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CommerceKingsInfobipViberProvider" type="CommerceKings\NotificationInfobip\Model\Provider\InfobipProvider">
+        <arguments>
+            <argument name="code" xsi:type="string">infobip_viber</argument>
+            <argument name="label" xsi:type="string">Infobip Viber</argument>
+            <argument name="channel" xsi:type="const">CommerceKings\Notification\Api\Channel::VIBER</argument>
+        </arguments>
+    </virtualType>
+    <type name="CommerceKings\Notification\Model\ProviderPool">
+        <arguments>
+            <argument name="providers" xsi:type="array">
+                <item name="infobip_sms" xsi:type="object">CommerceKingsInfobipSmsProvider</item>
+                <item name="infobip_whatsapp" xsi:type="object">CommerceKingsInfobipWhatsappProvider</item>
+                <item name="infobip_viber" xsi:type="object">CommerceKingsInfobipViberProvider</item>
+            </argument>
+        </arguments>
+    </type>
+    <!-- the admin's provider selectors for these channels (Notification's Delivery group) -->
+    <virtualType name="CommerceKingsInfobipSmsProviderSource" type="CommerceKings\Notification\Model\Config\Source\Provider">
+        <arguments>
+            <argument name="channel" xsi:type="const">CommerceKings\Notification\Api\Channel::SMS</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CommerceKingsInfobipWhatsappProviderSource" type="CommerceKings\Notification\Model\Config\Source\Provider">
+        <arguments>
+            <argument name="channel" xsi:type="const">CommerceKings\Notification\Api\Channel::WHATSAPP</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CommerceKingsInfobipViberProviderSource" type="CommerceKings\Notification\Model\Config\Source\Provider">
+        <arguments>
+            <argument name="channel" xsi:type="const">CommerceKings\Notification\Api\Channel::VIBER</argument>
+        </arguments>
+    </virtualType>
+    <!-- quiet hours in the recipient's time zone, from the number (one provider module per channel: these items
+         are keyed by channel, so another provider module's zones for the same channel would replace them) -->
+    <type name="CommerceKings\Notification\Model\QuietHours">
+        <arguments>
+            <argument name="zones" xsi:type="array">
+                <item name="sms" xsi:type="object">CommerceKings\NotificationInfobip\Model\NumberZones</item>
+                <item name="whatsapp" xsi:type="object">CommerceKings\NotificationInfobip\Model\NumberZones</item>
+                <item name="viber" xsi:type="object">CommerceKings\NotificationInfobip\Model\NumberZones</item>
+            </argument>
+        </arguments>
+    </type>
+    <!-- the opt-in confirmation, sent by Notification's shared consumer -->
+    <type name="CommerceKings\Notification\Model\TypePool">
+        <arguments>
+            <argument name="types" xsi:type="array">
+                <item name="infobip_optin" xsi:type="object">CommerceKings\NotificationInfobip\Model\Optin\Confirmation</item>
+            </argument>
+        </arguments>
+    </type>
+    <!-- Infobip's REST API over Guzzle (Magento ships it) -->
+    <type name="CommerceKings\NotificationInfobip\Model\Http\InfobipClient">
+        <arguments>
+            <argument name="http" xsi:type="object">GuzzleHttp\Client</argument>
+        </arguments>
+    </type>
+    <!-- rate limits for the delivery report webhook only (module-rate-limit, if installed). Never the inbound one: a
+         limited request gets 429 and a STOP could be lost -->
+    <type name="CommerceKings\RateLimit\Model\EndpointRegistry">
+        <arguments>
+            <argument name="definitions" xsi:type="array">
+                <item name="infobip_report" xsi:type="array">
+                    <item name="label" xsi:type="string">Infobip: delivery report webhook</item>
+                    <item name="controller" xsi:type="string">CommerceKings\NotificationInfobip\Controller\Webhook\Report</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+</config>

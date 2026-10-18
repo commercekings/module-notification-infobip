@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:App/etc/routes.xsd">
+    <router id="standard">
+        <!-- Infobip's webhooks: /ckinfobip/webhook/inbound (messages to the shop) and /ckinfobip/webhook/report
+             (delivery reports), each with ?channel=…&token=… (Model\Webhook\WebhookAuth) -->
+        <route id="ckinfobip" frontName="ckinfobip">
+            <module name="CommerceKings_NotificationInfobip"/>
+        </route>
+    </router>
+</config>

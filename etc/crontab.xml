@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <job name="commercekings_notification_infobip_optin_cleanup" instance="CommerceKings\NotificationInfobip\Cron\CleanUpOptinState" method="execute">
+            <schedule>40 3 * * *</schedule>
+        </job>
+    </group>
+</config>

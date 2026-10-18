@@ -1,0 +1,49 @@
+{
+    "name": "commercekings/module-notification-infobip",
+    "description": "Infobip SMS, WhatsApp and Viber for CommerceKings Notification: three providers, authenticated reply and delivery report webhooks (STOP/START, undeliverable numbers), the opt-in confirmation, WhatsApp templates and quiet hours in the recipient's time zone.",
+    "type": "magento2-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "CommerceKings"
+        }
+    ],
+    "require": {
+        "php": "~8.1.0||~8.2.0||~8.3.0||~8.4.0||~8.5.0",
+        "magento/framework": "^103.0.4",
+        "magento/module-config": "^101.2",
+        "magento/module-store": "^101.1",
+        "commercekings/module-notification": "^0.1",
+        "giggsey/libphonenumber-for-php": "^8.13||^9.0",
+        "guzzlehttp/guzzle": "^7.4"
+    },
+    "suggest": {
+        "commercekings/module-rate-limit": "Rate limits for the delivery report webhook (Magento 2.4.7+)"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "CommerceKings\\NotificationInfobip\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    },
+    "archive": {
+        "exclude": [
+            "/Test/",
+            "/.github/",
+            "/.gitignore",
+            "/.gitattributes"
+        ]
+    },
+    "homepage": "https://github.com/commercekings/module-notification-infobip",
+    "support": {
+        "issues": "https://github.com/commercekings/module-notification-infobip/issues",
+        "source": "https://github.com/commercekings/module-notification-infobip"
+    }
+}
