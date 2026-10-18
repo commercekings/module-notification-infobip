@@ -14,14 +14,18 @@ use GuzzleHttp\Exception\RequestException;
  * Infobip's REST API ("Authorization: App <API key>", JSON). What a failure means for the sender:
  * - Infobip answered with an error, or accepted the request but rejected the message (status group REJECTED): nothing
  *   was sent - InfobipException with Infobip's name;
- * - no connection: nothing was sent - \RuntimeException;
- * - connected, then no answer (a timeout, an empty reply): it may have been sent - MessageSentException, so it is never
- *   sent twice.
+ * - no connection (proven by cURL's report): nothing was sent - \RuntimeException;
+ * - anything else, e.g. a timeout waiting for the answer or an empty reply: it may have been sent -
+ *   MessageSentException, so it is never sent twice.
  */
 class InfobipClient
 {
     /** Infobip's status group of a message it will not send. */
     public const GROUP_REJECTED = 'REJECTED';
+
+    /** cURL errors before the request left: proxy or host not resolved, connection refused, TLS handshake. */
+    private const NOT_SENT_ERRNOS = [5, 6, 7, 35];
+    private const ERRNO_TIMEOUT = 28;
 
     public function __construct(
         private readonly ClientInterface $http,
@@ -51,11 +55,11 @@ class InfobipClient
                 'http_errors' => false,
             ]);
         } catch (ConnectException $error) {
-            // an empty reply (cURL 52) comes after the request was sent: it may have been accepted
-            if ((int)($error->getHandlerContext()['errno'] ?? 0) === 52) {
-                throw new MessageSentException('Infobip sent no reply; the message may have been sent.', 0, $error);
+            if (self::neverSent($error->getHandlerContext())) {
+                throw new \RuntimeException('Infobip could not be reached; nothing was sent.', 0, $error);
             }
-            throw new \RuntimeException('Infobip could not be reached; nothing was sent.', 0, $error);
+            // a timeout waiting for the answer, an empty reply (cURL 52), …: it may have been accepted
+            throw new MessageSentException('Infobip did not answer; the message may have been sent.', 0, $error);
         } catch (RequestException $error) {
             if ($error->getResponse() === null) {
                 throw new MessageSentException('Infobip did not answer in time; the message may have been sent.', 0, $error);
@@ -81,5 +85,22 @@ class InfobipClient
             }
         }
         return $answer;
+    }
+
+    /**
+     * Whether cURL's report proves the request never left: the proxy or host was not found (5, 6), the connection was
+     * refused (7) or TLS failed (35) - or a timeout (28) before any transfer began (pretransfer_time 0, nothing sent).
+     * cURL reports a timeout while connecting and while waiting for the answer alike, so a timeout without that proof,
+     * and any other failure, may have been sent.
+     */
+    private static function neverSent(array $context): bool
+    {
+        $errno = (int)($context['errno'] ?? 0);
+        if (in_array($errno, self::NOT_SENT_ERRNOS, true)) {
+            return true;
+        }
+        return $errno === self::ERRNO_TIMEOUT && isset($context['pretransfer_time'])
+            && (float)$context['pretransfer_time'] <= 0.0 && (int)($context['request_size'] ?? 0) === 0
+            && (float)($context['size_upload'] ?? 0) <= 0.0;
     }
 }

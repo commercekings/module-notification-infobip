@@ -16,9 +16,10 @@ Start with the [README](../README.md).
   No failover is ever requested. A refusal naming an opt-out (the person blocked the sender) stops the number
   (`REASON_REPLY`) before the error goes back to the sender.
 - **`Model\Http\InfobipClient`**: `Authorization: App <key>`, JSON. Infobip refusing the request, or rejecting the
-  message (status group `REJECTED`) in an accepted one, is `Exception\InfobipException` (nothing sent); no connection
-  is a `\RuntimeException` (nothing sent); a timeout or an empty reply after the request went out is
-  `MessageSentException` – it may be out, so it is never sent again.
+  message (status group `REJECTED`) in an accepted one, is `Exception\InfobipException` (nothing sent); a failure
+  cURL proves came before the request left (host not found, connection refused, TLS, a timeout before any transfer)
+  is a `\RuntimeException` (nothing sent); anything else – a timeout waiting for the answer, an empty reply – is
+  `MessageSentException`: it may be out, so it is never sent again.
 - **Webhooks** (`Controller\Webhook\Inbound`, `Report`; route `ckinfobip`): POST, JSON, authorized by the URL's token
   (`Model\Webhook\WebhookAuth`: an HMAC of the account's webhook secret per webhook; the account whose token matches,
   tried per website), 403 otherwise; 200 for every authorized request. `Model\Webhook\InboundProcessor` and

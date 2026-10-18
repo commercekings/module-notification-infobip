@@ -14,6 +14,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /** What a failure means: refused (nothing sent), unreachable (nothing sent) or no answer (maybe sent: never again). */
@@ -88,6 +89,43 @@ class InfobipClientTest extends TestCase
             } catch (MessageSentException $error) {
                 $this->assertStringContainsString('may have been sent', $error->getMessage());
             }
+        }
+    }
+
+    /** @return array<string, array{array<string, mixed>, bool}> cURL's report => whether the message may have been sent */
+    public static function connectFailures(): array
+    {
+        return [
+            'connection refused' => [['errno' => 7], false],
+            'host not found' => [['errno' => 6], false],
+            'proxy not found' => [['errno' => 5], false],
+            'TLS handshake failed' => [['errno' => 35], false],
+            'timeout while connecting' => [['errno' => 28, 'pretransfer_time' => 0.0, 'request_size' => 0, 'size_upload' => 0.0], false],
+            'timeout after the request went out' => [['errno' => 28, 'pretransfer_time' => 0.21, 'request_size' => 412,
+                'size_upload' => 380.0], true],
+            'timeout without a transfer report' => [['errno' => 28], true],
+            'timeout, headers sent' => [['errno' => 28, 'pretransfer_time' => 0.0, 'request_size' => 412], true],
+            'empty reply' => [['errno' => 52], true],
+            'no report at all' => [[], true],
+        ];
+    }
+
+    /**
+     * cURL reports a timeout while connecting and while waiting for the answer alike: only a failure that provably
+     * happened before the request left is "nothing sent" (and retried); anything else may have been sent – never again.
+     */
+    #[DataProvider('connectFailures')]
+    public function testOnlyAProvenConnectFailureIsNotSent(array $context, bool $maybeSent): void
+    {
+        $failure = new ConnectException('cURL error', new Request('POST', 'https://abc.api.infobip.com'), null, $context);
+        try {
+            $this->send($this->client([$failure]));
+            $this->fail('Expected an exception');
+        } catch (MessageSentException $error) {
+            $this->assertTrue($maybeSent, 'reported as maybe sent: ' . $error->getMessage());
+        } catch (\RuntimeException $error) {
+            $this->assertFalse($maybeSent, 'reported as not sent: ' . $error->getMessage());
+            $this->assertStringContainsString('nothing was sent', $error->getMessage());
         }
     }
 

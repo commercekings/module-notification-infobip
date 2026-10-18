@@ -20,7 +20,8 @@ Email is built into Notification and works out of the box; this module adds text
 - **Quiet hours in the recipient's time zone**, from the number (libphonenumber) – as US state laws such as Florida's
   FTSA require.
 - **Opt-in confirmation.** One message to a number's first sign-up, as US carriers require – never twice.
-- **Never twice, never elsewhere.** A timeout after sending counts as sent; Infobip's channel failover is never used.
+- **Never twice, never elsewhere.** A timeout counts as sent unless the request provably never left the shop;
+  Infobip's channel failover is never used.
 
 ## Installation
 
