@@ -75,6 +75,9 @@ webhook is registered with `commercekings/module-rate-limit`: a limited inbound 
   is part of it.
 - **WhatsApp:** marketing needs an approved template per language; without a mapped template the message is not sent
   (the notification counts a failed attempt).
+- **Protect against SMS pumping.** The public sign-up endpoints can be abused to trigger paid texts (e.g. opt-in
+  confirmations to premium-rate numbers) – plan for it: limit them with [module-rate-limit](https://github.com/commercekings/module-rate-limit) and restrict the
+  destinations to the countries you sell to; check your Infobip account for its fraud protection and turn it on.
 - Send a test with your own number: the message, a STOP reply, START, and a delivery report.
 
 ## Limitations
