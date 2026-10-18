@@ -1,6 +1,8 @@
-# Infobip for CommerceKings Notification<a href="https://commercekings.net"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/commercekings/module-abandoned-cart/main/.github/commercekings-dark.svg"><img align="right" width="152" src="https://raw.githubusercontent.com/commercekings/module-abandoned-cart/main/.github/commercekings-light.svg" alt="Built by CommerceKings. Ready to sell more? Talk to us"></picture></a>
+# Infobip for CommerceKings Notification<a href="https://commercekings.net"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/commercekings/module-notification-infobip/main/.github/commercekings-dark.svg"><img align="right" width="152" src="https://raw.githubusercontent.com/commercekings/module-notification-infobip/main/.github/commercekings-light.svg" alt="Built by CommerceKings. Ready to sell more? Talk to us"></picture></a>
 
 Works with Magento 2.4.4+ · PHP 8.1–8.5 · CommerceKings Notification · Infobip SMS, WhatsApp and Viber
+
+[![License](https://badgen.net/github/license/commercekings/module-notification-infobip)](LICENSE) [![Release](https://badgen.net/github/release/commercekings/module-notification-infobip)](https://github.com/commercekings/module-notification-infobip/releases) [![Checks](https://github.com/commercekings/module-notification-infobip/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/commercekings/module-notification-infobip/actions/workflows/checks.yml)
 
 **Text, WhatsApp and Viber messages through Infobip** for every CommerceKings notification on those channels – e.g.
 `commercekings/module-abandoned-cart-sms`. This module only talks to Infobip; consent, the stop list, quiet hours and
