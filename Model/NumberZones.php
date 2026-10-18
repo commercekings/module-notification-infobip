@@ -14,7 +14,7 @@ use Magento\Store\Model\ScopeInterface;
  * Quiet hours in the recipient's time zone (registered for sms, whatsapp and viber in Model\QuietHours "zones"): the
  * zones libphonenumber knows for the number's country and area code - several for a number whose area spans zones,
  * and Notification keeps it quiet while any of them is in quiet hours. A number it cannot place keeps the store's
- * zone (never "never quiet"); the whole store (null) gets [] - each delivery is then held on its own.
+ * zone (never "not quiet"); the whole store (null) gets [] - each delivery is then held on its own.
  */
 class NumberZones implements QuietHoursZoneInterface
 {

@@ -27,7 +27,7 @@ class NumberZonesTest extends TestCase
         $this->assertSame(['Europe/Belgrade'], $this->names('+381601234567'));
     }
 
-    /** A number it cannot place keeps the store's zone: quiet hours still apply (never "never quiet"). */
+    /** A number it cannot place keeps the store's zone: quiet hours still apply (never "not quiet"). */
     public function testANumberItCannotPlaceKeepsTheStoresZone(): void
     {
         $this->assertSame(['Europe/Berlin'], $this->names('not a number'));
