@@ -58,7 +58,9 @@ Docs: [SMS over API](https://www.infobip.com/docs/sms/api),
 |---|---|---|
 | 2xx, no message in group `REJECTED` | – | yes |
 | 2xx, a message in group `REJECTED` (e.g. `REJECTED_DESTINATION`) | `InfobipException` (`status.name`) | no |
-| non-2xx | `InfobipException` (error name, HTTP status) | no |
+| HTTP 429, or 503 with `Retry-After` | `TemporaryFailureException` (`getRetryAfter()`: the header's seconds) | no – sent again after the wait |
+| any other 5xx (500, 502, 503 without `Retry-After`, 504, …) | `MessageSentException` | maybe – never sent again |
+| any other non-2xx | `InfobipException` (error name, HTTP status) | no |
 | cURL proves the request never left: errno 5, 6 (proxy/host not resolved), 7 (connection refused), 35 (TLS) | `\RuntimeException` | no |
 | cURL timeout (28) **with** `pretransfer_time` 0, `request_size` 0 and `size_upload` 0 | `\RuntimeException` | no |
 | any other timeout, empty reply (52), or other transport error | `MessageSentException` | maybe – never sent again, so a shopper is never messaged (or charged) twice |
@@ -66,6 +68,13 @@ Docs: [SMS over API](https://www.infobip.com/docs/sms/api),
 
 cURL reports a connect timeout and a read timeout with the same errno 28, so only the transfer counters prove that
 nothing left; without that proof a timeout counts as maybe sent.
+
+**Timeout/5xx rule:** whenever the request may have reached Infobip and no clear refusal came back – a timeout without
+cURL's proof that nothing left, an empty reply, or a 5xx other than 503 with `Retry-After` – the message counts as
+maybe sent (`MessageSentException`): it is never sent again, so a shopper is never messaged (or charged) twice; a lost
+message is the accepted cost. A clear "not now" (429, or 503 with `Retry-After`) is a `TemporaryFailureException`:
+nothing was sent, and a feature sends it again after the wait (abandoned cart: `Retry-After`, else 15 minutes, without
+counting a failed attempt).
 
 An `InfobipException` whose name `Model\ErrorCodes` knows also updates the stop list (below) before the send fails;
 any other name stops nobody.

@@ -5,6 +5,9 @@
 First release. Requires Magento 2.4.4 or later (`magento/framework ^103.0.4`) and `commercekings/module-notification`;
 PHP 8.1–8.5.
 
+- **Rate limits and server errors:** HTTP 429, or 503 with `Retry-After`, is Notification's
+  `TemporaryFailureException` (nothing sent, try again after the wait); any other 5xx counts as maybe sent
+  (`MessageSentException`, never sent twice) - the timeout/5xx rule in [docs/provider-api.md](docs/provider-api.md).
 - **Providers for SMS, WhatsApp and Viber** through Infobip (`infobip_sms`, `infobip_whatsapp`, `infobip_viber`):
   one provider class with a channel, as virtual types. Built on Notification's `@api` and di.xml only.
 - **Account per website:** API base URL, API key (encrypted), the sender per channel, webhook secret (encrypted).

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CommerceKings\NotificationInfobip\Model\Http;
 
 use CommerceKings\Notification\Exception\MessageSentException;
+use CommerceKings\Notification\Exception\TemporaryFailureException;
 use CommerceKings\NotificationInfobip\Exception\InfobipException;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ConnectException;
@@ -14,6 +15,8 @@ use GuzzleHttp\Exception\RequestException;
  * Infobip's REST API ("Authorization: App <API key>", JSON). What a failure means for the sender:
  * - Infobip answered with an error, or accepted the request but rejected the message (status group REJECTED): nothing
  *   was sent - InfobipException with Infobip's name;
+ * - HTTP 429, or 503 with Retry-After: nothing was sent, try again soon - TemporaryFailureException;
+ * - any other 5xx: it may have been sent - MessageSentException;
  * - no connection (proven by cURL's report): nothing was sent - \RuntimeException;
  * - anything else, e.g. a timeout waiting for the answer or an empty reply: it may have been sent -
  *   MessageSentException, so it is never sent twice.
@@ -71,6 +74,16 @@ class InfobipClient
         $status = $response->getStatusCode();
         $answer = json_decode((string)$response->getBody(), true);
         $answer = is_array($answer) ? $answer : [];
+        $retryAfter = TemporaryFailureException::parseRetryAfter($response->getHeaderLine('Retry-After'));
+        if ($status === 429 || ($status === 503 && $retryAfter !== null)) {
+            // too many requests, or briefly unavailable and Infobip said for how long: nothing was sent, try again soon
+            throw new TemporaryFailureException(sprintf('Infobip refused the request for now (HTTP %d); nothing was'
+                . ' sent.', $status), $retryAfter);
+        }
+        if ($status >= 500) {
+            // a server error may come after Infobip took the message: never send it twice
+            throw new MessageSentException(sprintf('Infobip answered HTTP %d; the message may have been sent.', $status));
+        }
         if ($status < 200 || $status >= 300) {
             $name = strtoupper((string)($answer['requestError']['serviceException']['messageId']
                 ?? $answer['requestError']['policyException']['messageId'] ?? $answer['errorCode'] ?? ''));

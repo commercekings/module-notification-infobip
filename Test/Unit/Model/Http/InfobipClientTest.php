@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CommerceKings\NotificationInfobip\Test\Unit\Model\Http;
 
 use CommerceKings\Notification\Exception\MessageSentException;
+use CommerceKings\Notification\Exception\TemporaryFailureException;
 use CommerceKings\NotificationInfobip\Exception\InfobipException;
 use CommerceKings\NotificationInfobip\Model\Http\InfobipClient;
 use GuzzleHttp\Client;
@@ -133,5 +134,48 @@ class InfobipClientTest extends TestCase
     {
         $this->expectException(\RuntimeException::class);
         $this->client([])->send('', 'key', '/sms/2/text/advanced', []);
+    }
+
+    /** A rate limit, or a short outage with a stated wait: nothing was sent, send it again soon. */
+    public function testA429OrA503WithRetryAfterIsATemporaryRefusal(): void
+    {
+        foreach ([[new Response(429, ['Retry-After' => '30'], '{"requestError":{"serviceException":{"messageId":"TOO_MANY_REQUESTS"}}}'), 30],
+            [new Response(429, [], '{"requestError":{"serviceException":{"messageId":"TOO_MANY_REQUESTS"}}}'), null],
+            [new Response(503, ['Retry-After' => 'Mon, 19 Oct 2099 10:05:00 GMT'], ''), 'date'],
+            [new Response(503, ['Retry-After' => '120'], ''), 120]] as [$response, $wait]) {
+            try {
+                $this->send($this->client([$response]));
+                $this->fail('Expected a temporary refusal');
+            } catch (TemporaryFailureException $error) {
+                $this->assertStringContainsString('HTTP ' . $response->getStatusCode(), $error->getMessage());
+                $wait === 'date' ? $this->assertGreaterThan(0, $error->getRetryAfter())
+                    : $this->assertSame($wait, $error->getRetryAfter());
+            }
+        }
+    }
+
+    /** A server error may come after the message was taken: never send it twice. A 503 without a wait is one too. */
+    public function testOtherServerErrorsMayHaveBeenSent(): void
+    {
+        foreach ([500, 502, 503, 504] as $status) {
+            try {
+                $this->send($this->client([new Response($status, [], '')]));
+                $this->fail('Expected maybe sent for ' . $status);
+            } catch (MessageSentException $error) {
+                $this->assertStringContainsString('HTTP ' . $status, $error->getMessage());
+            }
+        }
+    }
+
+    public function testOtherClientErrorsStayRefusals(): void
+    {
+        foreach ([400, 401, 403, 404] as $status) {
+            try {
+                $this->send($this->client([new Response($status, ['Retry-After' => '30'], '{}')]));
+                $this->fail('Expected a refusal for ' . $status);
+            } catch (InfobipException $error) {
+                $this->assertSame($status, $error->getCode());
+            }
+        }
     }
 }
