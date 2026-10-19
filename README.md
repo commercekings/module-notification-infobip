@@ -41,7 +41,7 @@ Then **Stores > Configuration > CommerceKings > Notifications**:
 3. **Infobip > WhatsApp templates:** one row per notification type and locale with the approved template's name,
    language and variables (e.g. `infobip_optin` – `store`; your own WhatsApp notification type – its variables). No
    WhatsApp cart reminder ships: the abandoned cart texts are SMS.
-4. **Delivery:** select Infobip as the SMS, WhatsApp and Viber provider (automatic when it is the only one).
+4. **Channels and providers:** select Infobip as the SMS, WhatsApp and Viber provider (automatic when it is the only one).
 5. In Infobip, **turn channel failover off** for these senders.
 
 ## Webhooks and their authentication

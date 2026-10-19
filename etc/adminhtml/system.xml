@@ -24,10 +24,10 @@
             <group id="infobip" translate="label comment" sortOrder="55" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Infobip</label>
                 <fieldset_css>commercekings-config-section</fieldset_css>
-                <comment><![CDATA[Text, WhatsApp and Viber messages through Infobip, one account per website. Each message asks Infobip for its delivery report. In Infobip, forward the messages to your senders (inbound, "Forward to HTTP", JSON) to the URLs shown below - they carry a token made from the webhook secret. Turn Infobip's channel failover off: a message must stay on its channel. One provider module per channel: with another one installed for the same channel, its quiet hours zones and opt-in confirmation may apply instead.]]></comment>
+                <comment>Text, WhatsApp and Viber messages through your Infobip account.</comment>
                 <field id="base_url" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>API base URL</label>
-                    <comment>Your account's base URL from the Infobip portal, e.g. https://xxxxx.api.infobip.com.</comment>
+                    <comment>Your account's base URL from the Infobip portal, e.g. https://xxxxx.api.infobip.com. One account per website. Turn Infobip's channel failover off: a message must stay on its channel. One provider module per channel: with another one installed for the same channel, its quiet hours zones and opt-in confirmation may apply instead.</comment>
                 </field>
                 <field id="api_key" translate="label comment" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>API key</label>
@@ -55,9 +55,10 @@
                     <label>Public URL</label>
                     <comment>The shop's public HTTPS address as Infobip calls it, e.g. https://shop.example. Empty: the store's secure base URL.</comment>
                 </field>
-                <field id="webhook_urls" translate="label" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="webhook_urls" translate="label comment" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Inbound message URLs</label>
                     <frontend_model>CommerceKings\NotificationInfobip\Block\Adminhtml\System\Config\WebhookUrls</frontend_model>
+                    <comment>In Infobip, forward the messages to your senders (inbound, "Forward to HTTP", JSON) to these URLs; they carry a token made from the webhook secret. Each message asks for its own delivery report.</comment>
                 </field>
                 <field id="optin_enabled" translate="label comment" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Opt-in confirmation</label>
