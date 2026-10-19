@@ -30,12 +30,18 @@ class WebhookUrls extends Field
     {
         $storeId = $this->storeId();
         $rows = [];
+        // no <dl>: the admin's accordion CSS hides every <dd> inside a config group
         foreach ([Channel::SMS => 'SMS', Channel::WHATSAPP => 'WhatsApp', Channel::VIBER => 'Viber'] as $channel => $label) {
             $url = $this->auth->url($storeId, WebhookAuth::INBOUND, $channel);
-            $rows[] = '<dt>' . $this->escapeHtml($label) . '</dt><dd><code>'
-                . $this->escapeHtml($url !== '' ? $url : (string)__('Set a webhook secret and save first.')) . '</code></dd>';
+            if ($url === '') {
+                return '<p>' . $this->escapeHtml((string)__('Set a webhook secret and save first.')) . '</p>';
+            }
+            $id = $this->escapeHtml($element->getHtmlId() . '_' . $channel);
+            $rows[] = '<div class="ck-infobip-webhook-url" style="margin-bottom:8px"><label for="' . $id . '">'
+                . $this->escapeHtml($label) . '</label><input type="text" readonly="readonly" class="input-text admin__control-text"'
+                . ' id="' . $id . '" value="' . $this->escapeHtml($url) . '"/></div>';
         }
-        return '<dl>' . implode('', $rows) . '</dl>';
+        return implode('', $rows);
     }
 
     private function storeId(): int

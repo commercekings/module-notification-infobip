@@ -66,14 +66,14 @@
                 </field>
                 <field id="optin_text" translate="label comment" type="textarea" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Opt-in confirmation text</label>
-                    <comment>For SMS and Viber; {{store}} is the store's name. WhatsApp sends a template instead: map "infobip_optin" below (variable "store").</comment>
+                    <comment><![CDATA[For SMS and Viber; {{store}} is the store's name. WhatsApp sends a template instead: map "infobip_optin" below (variable "store").]]></comment>
                     <depends><field id="optin_enabled">1</field></depends>
                 </field>
                 <field id="template_map" translate="label comment" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>WhatsApp templates</label>
                     <frontend_model>CommerceKings\NotificationInfobip\Block\Adminhtml\Form\Field\TemplateMap</frontend_model>
                     <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
-                    <comment>Per notification type (e.g. infobip_optin, or your own WhatsApp notification type) and locale (e.g. de_DE, de, or empty for any): the approved template's name and language in Infobip, and the notification's variables for {{1}}, {{2}}, … (e.g. store for infobip_optin).</comment>
+                    <comment><![CDATA[Per notification type (e.g. infobip_optin, or your own WhatsApp notification type) and locale (e.g. de_DE, de, or empty for any): the approved template's name and language in Infobip, and the notification's variables for {{1}}, {{2}}, … (e.g. store for infobip_optin).]]></comment>
                 </field>
             </group>
         </section>
