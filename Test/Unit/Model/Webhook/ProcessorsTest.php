@@ -71,6 +71,19 @@ class ProcessorsTest extends TestCase
         }
     }
 
+    public function testAKeywordForwardingSetupDoesNotLoseTheReply(): void
+    {
+        $this->assertSame(['stop', 'stop', 'start', 'stop', ''], $this->inbound([
+            // forwarding for the keyword STOP: the whole reply is the keyword, nothing after it
+            ['from' => '381601234567', 'text' => 'STOP', 'keyword' => 'STOP', 'cleanText' => ''],
+            // forwarding for the keyword SHOP: the reply after it is STOP
+            ['from' => '381601234567', 'text' => 'SHOP STOP', 'keyword' => 'SHOP', 'cleanText' => 'STOP'],
+            ['from' => '381601234567', 'text' => 'shop start!', 'keyword' => 'SHOP', 'cleanText' => 'start!'],
+            ['from' => '381601234567', 'keyword' => 'STOP', 'cleanText' => ''],
+            ['from' => '381601234567', 'text' => 'STOP please', 'keyword' => 'STOP', 'cleanText' => 'please'],
+        ], 'sms'));
+    }
+
     public function testAnUnrecognizedReplyIsLoggedWithoutTheNumberOrText(): void
     {
         $this->assertSame([''], $this->inbound([['from' => '381601234567', 'text' => 'Where is my parcel?']], 'sms'));

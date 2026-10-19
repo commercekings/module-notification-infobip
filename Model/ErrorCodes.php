@@ -19,7 +19,9 @@ final class ErrorCodes
         'REJECTED_DND',                // status 10: the user is subscribed to a Do Not Disturb service
         'EC_SC_BLOCKED_BY_END_USER',   // 573: the end user asked their operator to block the sender
         'EC_CONTENT_BLOCKED',          // 603: blocked by the user's opt-out (MO: STOP)
-        'EC_BLOCKED_USER',             // 7003: the user blocked the business (WhatsApp, Viber; RCS opt-out)
+        // 7003: the user blocked the business - documented under RCS; applied to WhatsApp and Viber on the assumption
+        // that Infobip uses it there too
+        'EC_BLOCKED_USER',
         'EC_TEMPLATE_BLOCKED_BY_USER', // 7030: the user blocked this template (WhatsApp)
         'EC_MARKETING_OPT_OUT',        // 7033: the user turned off marketing messages (WhatsApp)
     ];
@@ -34,7 +36,9 @@ final class ErrorCodes
         'EC_DESTINATION_NOT_SMS_PROVISIONED',     // 568: not provisioned for SMS
         'EC_DEST_ADDRESS_UNABLE_TO_RECEIVE_SMS',  // 629: cannot receive SMS (e.g. a landline)
         'EC_DEACTIVATED_LIST',                    // 3041: deactivated number
-        'EC_UNKNOWN_USER',                        // 7002: no account on the channel (WhatsApp, Viber)
+        // 7002: the user is unknown on the channel - documented under RCS; applied to WhatsApp and Viber on the
+        // assumption that Infobip uses it there too
+        'EC_UNKNOWN_USER',
     ];
 
     /**

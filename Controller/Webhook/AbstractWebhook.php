@@ -13,8 +13,8 @@ use Magento\Framework\Controller\Result\RawFactory;
 use Magento\Framework\Controller\ResultInterface;
 
 /**
- * An Infobip webhook: POST with a JSON body, authorized by its URL's token (WebhookAuth - Infobip signs nothing, and a
- * form key cannot apply), 403 without doing anything when it does not match an account. An authorized request is
+ * An Infobip webhook: POST with a JSON body, authorized by its URL's token (WebhookAuth - Infobip doesn't sign these
+ * webhooks, and a form key cannot apply), 403 without doing anything when it does not match an account. An authorized request is
  * answered 200, also when a result in it could not be used: a retry would not change that.
  */
 abstract class AbstractWebhook implements HttpPostActionInterface, CsrfAwareActionInterface

@@ -6,7 +6,8 @@ namespace CommerceKings\NotificationInfobip\Model\Webhook;
 use CommerceKings\NotificationInfobip\Model\Config;
 
 /**
- * Infobip signs no webhook, so the URL carries the proof: a token, an HMAC of the account's webhook secret for that
+ * Infobip doesn't sign the per-message delivery reports or Forward-to-HTTP messages we use; its webhook subscriptions
+ * can, but we don't use them. So the URL carries the proof: a token, an HMAC of the account's webhook secret for that
  * webhook ("inbound" or "report"). The secret itself never travels; a token for one webhook does not open the other,
  * and changing the secret retires the old URLs. A request is the account's whose token matches, or nobody's.
  */

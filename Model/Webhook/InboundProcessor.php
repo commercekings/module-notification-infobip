@@ -82,13 +82,37 @@ class InboundProcessor
                 return 'start';
             }
         }
-        $text = (string)($result['cleanText'] ?? $result['text'] ?? $message['text'] ?? '');
-        foreach ([$message['payload'] ?? '', $message['text'] ?? '', $text] as $value) {
+        $texts = $this->texts($result, $message);
+        foreach ([$message['payload'] ?? '', ...$texts] as $value) {
             if (strtolower(trim((string)$value)) === self::STOP_PROMOTIONS) {
                 return 'stop';
             }
         }
-        return $this->keyword($text);
+        foreach ($texts as $text) {
+            $keyword = $this->keyword($text);
+            if ($keyword !== '') {
+                return $keyword;
+            }
+        }
+        return '';
+    }
+
+    /**
+     * The reply's texts, each checked whole: the full text, Infobip's keyword with the text after it, and the text after
+     * the keyword (cleanText). With forwarding set up for a keyword, a bare "STOP" arrives with an empty cleanText, and
+     * "SHOP STOP" (keyword SHOP) with cleanText "STOP" - either way the reply is not lost.
+     *
+     * @param array<string, mixed> $result
+     * @param array<string, mixed> $message
+     * @return string[]
+     */
+    private function texts(array $result, array $message): array
+    {
+        $keyword = trim((string)($result['keyword'] ?? ''));
+        $clean = (string)($result['cleanText'] ?? '');
+        $texts = [(string)($result['text'] ?? ''), (string)($message['text'] ?? ''),
+            $keyword !== '' ? $keyword . ' ' . $clean : '', $clean];
+        return array_values(array_filter($texts, fn (string $text) => trim($text) !== ''));
     }
 
     /**

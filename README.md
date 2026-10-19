@@ -46,7 +46,8 @@ Then **Stores > Configuration > CommerceKings > Notifications**:
 
 ## Webhooks and their authentication
 
-Infobip signs no webhook. Each URL carries a token instead – an HMAC of the website's webhook secret for that webhook
+Infobip doesn't sign the per-message delivery reports or Forward-to-HTTP messages we use; its webhook subscriptions
+can, but we don't use them. Each URL carries a token instead – an HMAC of the website's webhook secret for that webhook
 (`inbound` or `report`), never the secret itself:
 
 | URL | Called for |

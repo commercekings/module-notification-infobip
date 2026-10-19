@@ -9,8 +9,8 @@ PHP 8.1–8.5.
   one provider class with a channel, as virtual types. Built on Notification's `@api` and di.xml only.
 - **Account per website:** API base URL, API key (encrypted), the sender per channel, webhook secret (encrypted).
 - **WhatsApp templates** per notification type and locale, with their language and variables.
-- **Webhooks** for inbound messages and delivery reports, authorized by an HMAC token in the URL (Infobip signs no
-  webhook): STOP / START, WhatsApp "Stop promotions" and Viber unsubscribes keep Notification's stop list in step;
+- **Webhooks** for inbound messages and delivery reports, authorized by an HMAC token in the URL (Infobip doesn't
+  sign the per-message delivery reports or Forward-to-HTTP messages we use): STOP / START, WhatsApp "Stop promotions" and Viber unsubscribes keep Notification's stop list in step;
   blocked or opted-out numbers are stopped, numbers that failed for good are suppressed.
 - **Quiet hours in the recipient's time zone** for sms, whatsapp and viber, from the number (the store's zone when it
   cannot be placed).

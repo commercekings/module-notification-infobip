@@ -49,7 +49,7 @@
                 <field id="webhook_secret" translate="label comment" type="obscure" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Webhook secret</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                    <comment>A long random value of your choice; stored encrypted. Infobip signs no webhook, so their URLs carry a token made from it: without a secret every webhook is refused. Changing it retires the URLs in Infobip - enter the new ones.</comment>
+                    <comment>A long random value of your choice; stored encrypted. Infobip doesn't sign the per-message delivery reports or Forward-to-HTTP messages we use (its webhook subscriptions can, but we don't use them), so their URLs carry a token made from it: without a secret every webhook is refused. Changing it retires the URLs in Infobip - enter the new ones.</comment>
                 </field>
                 <field id="webhook_base_url" translate="label comment" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Public URL</label>

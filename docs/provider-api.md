@@ -81,7 +81,7 @@ Used for refused sends and for delivery reports alike.
 | `REJECTED_DND` (status 10) | recipient subscribed to Do Not Disturb | `stop(…, REASON_REPLY)` |
 | `EC_SC_BLOCKED_BY_END_USER` (573) | end user asked the operator to block the sender | `stop(…, REASON_REPLY)` |
 | `EC_CONTENT_BLOCKED` (603) | blocked by the user's opt-out (MO: STOP) | `stop(…, REASON_REPLY)` |
-| `EC_BLOCKED_USER` (7003) | the user blocked the business | `stop(…, REASON_REPLY)` |
+| `EC_BLOCKED_USER` (7003) | the user blocked the business (documented under RCS) | `stop(…, REASON_REPLY)` |
 | `EC_TEMPLATE_BLOCKED_BY_USER` (7030) | the user blocked this template | `stop(…, REASON_REPLY)` |
 | `EC_MARKETING_OPT_OUT` (7033) | the user turned off marketing messages (WhatsApp) | `stop(…, REASON_REPLY)` |
 | `REJECTED_PREFIX_MISSING` (status 8) | not a number (prefix or length) | `stop(…, REASON_UNDELIVERABLE)` |
@@ -92,7 +92,7 @@ Used for refused sends and for delivery reports alike.
 | `EC_DESTINATION_NOT_SMS_PROVISIONED` (568) | not provisioned for SMS | `stop(…, REASON_UNDELIVERABLE)` |
 | `EC_DEST_ADDRESS_UNABLE_TO_RECEIVE_SMS` (629) | cannot receive SMS (e.g. a landline) | `stop(…, REASON_UNDELIVERABLE)` |
 | `EC_DEACTIVATED_LIST` (3041) | deactivated number | `stop(…, REASON_UNDELIVERABLE)` |
-| `EC_UNKNOWN_USER` (7002) | the user is unknown on the channel | `stop(…, REASON_UNDELIVERABLE)` |
+| `EC_UNKNOWN_USER` (7002) | the user is unknown on the channel (documented under RCS) | `stop(…, REASON_UNDELIVERABLE)` |
 | anything else (account, sender, credit, demo whitelist, routes, network, unknown names) | the shop has to fix it | nothing |
 
 `REASON_REPLY` lifts only when the number sends START; `REASON_UNDELIVERABLE` keeps the consents and lifts after the
@@ -105,7 +105,8 @@ configured days.
 | Inbound messages | `POST {public URL}/ckinfobip/webhook/inbound?channel=sms\|whatsapp\|viber&token=…` | Infobip: the sender's inbound configuration, "Forward to HTTP", JSON (`MO_JSON_2` for SMS); the admin shows the three URLs |
 | Delivery reports | `POST {public URL}/ckinfobip/webhook/report?channel=…&token=…` | on every message (`notifyUrl` / `webhooks.delivery.url`) |
 
-**Authentication.** Per-message and "Forward to HTTP" webhooks carry no signature, so the URL carries the proof
+**Authentication.** Infobip doesn't sign the per-message delivery reports or Forward-to-HTTP messages we use; its
+webhook subscriptions can (Basic, HMAC, OAuth, mTLS), but we don't use them. So the URL carries the proof
 (`Model\Webhook\WebhookAuth`): `token` is the first 40 hex characters of
 `HMAC-SHA256("commercekings_infobip_webhook|<inbound|report>", webhook secret)`. The secret never travels; an inbound
 token does not open the report webhook and vice versa; changing the secret retires the old URLs. The token is
@@ -137,9 +138,12 @@ The body is `{"results": [ … ]}`; each result is handled on its own.
 | `integrationType` / `channel` | the channel when the URL names none |
 | `event`, `message.event`, `message.type` | Viber subscription events: `UNSUBSCRIBE`/`UNSUBSCRIBED` → stop, `SUBSCRIBE`/`SUBSCRIBED` → resume |
 | `message.payload`, `message.text`, the text | exactly `stop promotions` (ignoring case and outer spaces) → stop: WhatsApp's marketing opt-out button |
-| `cleanText`, else `text`, else `message.text` | the keyword rule below |
+| `text`, `message.text`, `keyword` + `cleanText`, `cleanText` | the keyword rule below, each checked whole; the first that matches decides |
 
-SMS `MO_JSON_2` results also carry `messageId`, `to`, `keyword` and `receivedAt`; they are not read.
+`cleanText` is the text after the keyword the forwarding is set up for. Checking all of them keeps a reply whatever
+the setup: a bare "STOP" with forwarding for the keyword STOP arrives with an empty `cleanText` (the full `text`
+matches); "SHOP STOP" with forwarding for SHOP arrives with `cleanText` "STOP" (that matches). SMS `MO_JSON_2`
+results also carry `messageId`, `to` and `receivedAt`; they are not read.
 Docs: [Receive inbound SMS](https://www.infobip.com/docs/api/channels/sms/inbound-sms/receive-inbound-sms-messages),
 [Keywords and actions](https://www.infobip.com/docs/numbers/keywords-and-actions).
 
@@ -181,3 +185,17 @@ confirmation uses type `infobip_optin` (variable `store`).
 
 Text only (`content.type: TEXT`), from the registered Viber business sender name; the delivery report URL goes in
 `webhooks.delivery.url`. Subscription events on the inbound webhook map to stop/resume as above.
+
+## Not verified
+
+From Infobip's documentation and our tests only, not checked against a live account:
+
+- WhatsApp templates and Viber: requests, delivery reports and inbound messages.
+- The inbound schemas Infobip's public pages do not show: Viber subscription events (`event`, `message.type`
+  `SUBSCRIBED`/`UNSUBSCRIBED`), the WhatsApp button reply (`message.type` `BUTTON` with `payload`), and
+  `integrationType` on inbound results.
+- `EC_BLOCKED_USER` (7003) and `EC_UNKNOWN_USER` (7002) on WhatsApp and Viber: Infobip documents them under RCS; we
+  apply them on the assumption that Infobip uses them there too.
+- A real inbound STOP from a phone (simulated only), including keyword-based forwarding setups.
+- The SMS API version: we use `/sms/2/text/advanced`; Infobip now points simple sends to `/sms/3/messages`. We found
+  no deprecation notice for v2; a live response's `Deprecation`/`Sunset` headers would tell.
