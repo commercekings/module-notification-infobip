@@ -152,7 +152,9 @@ The body is `{"results": [ … ]}`; each result is handled on its own.
 `cleanText` is the text after the keyword the forwarding is set up for. Checking all of them keeps a reply whatever
 the setup: a bare "STOP" with forwarding for the keyword STOP arrives with an empty `cleanText` (the full `text`
 matches); "SHOP STOP" with forwarding for SHOP arrives with `cleanText` "STOP" (that matches). SMS `MO_JSON_2`
-results also carry `messageId`, `to` and `receivedAt`; they are not read.
+results also carry `messageId` and `to`; they are not read. `receivedAt` (e.g. `2026-10-19T10:00:05.123+0000`) goes
+to the stop list with the STOP or START: a START lifts only an older stop, so a START that Infobip delivers late
+(it retries a forward for up to two days) cannot undo a newer STOP. Missing or unreadable: the reply counts as now.
 Docs: [Receive inbound SMS](https://www.infobip.com/docs/api/channels/sms/inbound-sms/receive-inbound-sms-messages),
 [Keywords and actions](https://www.infobip.com/docs/numbers/keywords-and-actions).
 

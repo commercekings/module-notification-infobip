@@ -11,6 +11,10 @@ use Psr\Log\LoggerInterface;
  * "STOP!!" too; see keyword()), WhatsApp's "Stop promotions" button and a Viber unsubscribe stop the number on its channel until it sends START
  * (StopListInterface::REASON_REPLY); START and its synonyms (and a Viber subscribe) lift it - removed subscriptions do
  * not come back. Anything else is left alone.
+ *
+ * Infobip retries a forward for up to two days while the shop does not answer, so replies can arrive out of order:
+ * each one carries its receivedAt, and a START lifts only a stop older than it (StopListInterface::resume()) - a late
+ * START never undoes a newer STOP. Without a readable receivedAt the reply counts as received now.
  */
 class InboundProcessor
 {
@@ -55,10 +59,11 @@ class InboundProcessor
         }
         $from = Address::number((string)($result['from'] ?? $result['sender'] ?? ''));
         try {
+            $receivedAt = $this->receivedAt($result);
             if ($action === 'stop') {
-                $this->stopList->stop($channel, $from, StopListInterface::REASON_REPLY);
+                $this->stopList->stop($channel, $from, StopListInterface::REASON_REPLY, $receivedAt);
             } else {
-                $this->stopList->resume($channel, $from);
+                $this->stopList->resume($channel, $from, $receivedAt);
             }
         } catch (\InvalidArgumentException) {
             // not a number Notification can take: nothing to stop; Infobip still gets 200 (a retry cannot succeed)
@@ -67,6 +72,24 @@ class InboundProcessor
             return '';
         }
         return $action;
+    }
+
+    /**
+     * When Infobip received the reply (e.g. "2026-10-19T10:00:05.123+0000"); null when missing or unreadable.
+     *
+     * @param array<string, mixed> $result
+     */
+    private function receivedAt(array $result): ?\DateTimeImmutable
+    {
+        $value = $result['receivedAt'] ?? null;
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+        try {
+            return new \DateTimeImmutable(trim($value));
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     /** @param array<string, mixed> $result */

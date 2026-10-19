@@ -18,6 +18,10 @@ PHP 8.1–8.5.
 - **Quiet hours in the recipient's time zone** for sms, whatsapp and viber, from the number (the store's zone when it
   cannot be placed).
 - **Opt-in confirmation:** one message per number's first sign-up in the website, claimed in Notification's delivery
-  state; a daily cleanup removes the claims of numbers Notification no longer keeps.
+  state; a daily cleanup removes the claims of numbers Notification no longer keeps. Never lost: a send refused for
+  now (429/503 Retry-After) or failed before Infobip took it, a broker that is down and a lost message are retried by
+  a 5-minute cron (8 attempts, then logged); one that may be out is never sent again.
+- **Reply order:** each reply's `receivedAt` goes to the stop list, so a START that Infobip delivers late (it retries
+  for up to two days) cannot undo a newer STOP.
 - **Never twice:** a timeout after the request counts as sent; Infobip's channel failover is never requested.
 - A rate limit for the delivery report webhook with `commercekings/module-rate-limit`.

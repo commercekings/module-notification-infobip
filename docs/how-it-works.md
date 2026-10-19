@@ -35,7 +35,10 @@ Start with the [README](../README.md).
   (`first_for_address`) when Infobip is the channel's selected provider; queued. The claim is one delivery state row
   (type `infobip_optin`, reference = the contact id, an atomic `sent_at` update), so two sign-ups at once, a retry or a
   second worker never send it twice; a send that fails before Infobip took it releases the claim. Not stoppable, no
-  cooldown. `Cron\CleanUpOptinState` (daily 03:40) removes the claims of contacts Notification no longer keeps
+  cooldown. Never lost (`Model\Optin\Pending`, type `infobip_optin_due`, reference = the subscription): a failure
+  before Infobip took it is retried (Retry-After, else 5 minutes doubling up to an hour; 8 attempts, then logged), and
+  `Cron\RetryOptinConfirmations` (every 5 minutes) publishes due ones again – also after a broker that was down or a
+  lost message; a confirmation interrupted while sending is logged, never resent (it may be out). `Cron\CleanUpOptinState` (daily 03:40) removes the claims of contacts Notification no longer keeps
   (`ContactRepositoryInterface::TABLE`) – Notification's own cleanup covers subscription types only.
 
 ## Settings

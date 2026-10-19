@@ -4,5 +4,8 @@
         <job name="commercekings_notification_infobip_optin_cleanup" instance="CommerceKings\NotificationInfobip\Cron\CleanUpOptinState" method="execute">
             <schedule>40 3 * * *</schedule>
         </job>
+        <job name="commercekings_notification_infobip_optin_retry" instance="CommerceKings\NotificationInfobip\Cron\RetryOptinConfirmations" method="execute">
+            <schedule>*/5 * * * *</schedule>
+        </job>
     </group>
 </config>

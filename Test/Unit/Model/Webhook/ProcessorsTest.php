@@ -23,7 +23,9 @@ class ProcessorsTest extends TestCase
                 if (($args[1] ?? '') === '+12') {
                     throw new \InvalidArgumentException('not a number');
                 }
-                $this->calls[] = [$method, ...$args];
+                // the request time as a string; without one (null) it is left out
+                $time = array_pop($args);
+                $this->calls[] = [$method, ...$args, ...($time ? [$time->format(DATE_ATOM)] : [])];
             };
         };
         $stopList->method('stop')->willReturnCallback($record('stop'));
@@ -82,6 +84,26 @@ class ProcessorsTest extends TestCase
             ['from' => '381601234567', 'keyword' => 'STOP', 'cleanText' => ''],
             ['from' => '381601234567', 'text' => 'STOP please', 'keyword' => 'STOP', 'cleanText' => 'please'],
         ], 'sms'));
+    }
+
+    /**
+     * A forward Infobip retried arrives late: the stop list gets each reply's receivedAt, so a START older than the
+     * latest STOP does not lift it (StopListInterface::resume()). An unreadable time counts as now.
+     */
+    public function testEachReplyCarriesItsReceiveTimeSoALateStartCannotUndoANewerStop(): void
+    {
+        $this->inbound([
+            ['from' => '381601234567', 'text' => 'STOP', 'receivedAt' => '2026-10-19T10:00:05.123+0000'],
+            ['from' => '381601234567', 'text' => 'START', 'receivedAt' => '2026-10-19T12:00:04.000+0200'],
+            ['from' => '381601234567', 'text' => 'START', 'receivedAt' => 'yesterday-ish'],
+            ['from' => '381601234567', 'message' => ['type' => 'UNSUBSCRIBED'], 'receivedAt' => '2026-10-19T10:00:06Z'],
+        ], 'sms');
+        $this->assertSame([
+            ['stop', 'sms', '+381601234567', StopListInterface::REASON_REPLY, '2026-10-19T10:00:05+00:00'],
+            ['resume', 'sms', '+381601234567', '2026-10-19T12:00:04+02:00'],
+            ['resume', 'sms', '+381601234567'],
+            ['stop', 'sms', '+381601234567', StopListInterface::REASON_REPLY, '2026-10-19T10:00:06+00:00'],
+        ], $this->calls);
     }
 
     public function testAnUnrecognizedReplyIsLoggedWithoutTheNumberOrText(): void

@@ -45,7 +45,7 @@ class MessageSenderTest extends TestCase
         $auth->method('url')->willReturnCallback(fn ($storeId, $webhook, $channel) =>
             "https://shop.test/ckinfobip/webhook/$webhook?channel=$channel&token=t");
         $stopList = $this->createStub(StopListInterface::class);
-        $stopList->method('stop')->willReturnCallback(function (...$args) { $this->stops[] = $args; });
+        $stopList->method('stop')->willReturnCallback(function (...$args) { $this->stops[] = array_slice($args, 0, 3); });
         $scope = $this->createStub(ScopeConfigInterface::class);
         $scope->method('getValue')->willReturnCallback(fn ($path) => $path === 'general/locale/code' ? $this->locale : null);
         return new MessageSender($config, $client, new TemplateMap($config), $auth, $stopList, $scope);
