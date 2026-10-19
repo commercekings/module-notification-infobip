@@ -93,6 +93,13 @@ webhook is registered with `commercekings/module-rate-limit`: a limited inbound 
 - Opt-outs and undeliverable numbers are recognized by Infobip's documented names only (`Model\ErrorCodes`); a name
   Infobip adds later stops nobody until it is added.
 
+## Tested (as of 0.1.0)
+
+- **Automated tests:** 79 unit and 4 integration tests (unit tests run on every push); 88.4% line coverage by the unit tests.
+- **Live:** text messages, the opt-in confirmation and delivery reports, on a live Infobip trial account.
+- **Install:** a fresh install of every CommerceKings package from GitHub on an empty Magento database, verified.
+- **Not tested:** WhatsApp and Viber on a live account; a STOP reply from a real phone (STOP is tested with the providers' webhook formats).
+
 ## More
 
 [How it works](docs/how-it-works.md) · [Provider API](docs/provider-api.md) · [Compatibility](COMPATIBILITY.md) · [Changes](CHANGELOG.md) ·
@@ -104,13 +111,6 @@ These modules help you ask for, record and respect your shoppers' choices – th
 their own. You are responsible for your store's privacy: what you collect, the wording you show, your privacy policy
 and whether your setup meets the laws that apply to you (e.g. GDPR, ePrivacy, TCPA, SMS marketing rules). Get legal
 advice if you are unsure.
-
-## Tested (as of 0.1.0)
-
-- **Automated tests:** 79 unit and 4 integration tests (unit tests run on every push); 88.4% line coverage by the unit tests.
-- **Live:** text messages, the opt-in confirmation and delivery reports, on a live Infobip trial account.
-- **Install:** a fresh install of every CommerceKings package from GitHub on an empty Magento database, verified.
-- **Not tested:** WhatsApp and Viber on a live account; a STOP reply from a real phone (STOP is tested with the providers' webhook formats).
 
 ---
 
