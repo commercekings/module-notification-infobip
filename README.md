@@ -91,6 +91,9 @@ webhook is registered with `commercekings/module-rate-limit`: a limited inbound 
 - Free-form WhatsApp messages (inside the 24-hour service window) are not sent: templates only.
 - Opt-outs and undeliverable numbers are recognized by Infobip's documented names only (`Model\ErrorCodes`); a name
   Infobip adds later stops nobody until it is added.
+- **Live testing:** text messages, the opt-in confirmation and delivery reports are tested on a live Infobip trial
+  account. Inbound replies (STOP, START) are verified with Infobip's webhook format, but not with a real reply from a
+  phone: our mobile carrier didn't deliver texts to Infobip's shared test number.
 
 ## More
 
