@@ -97,7 +97,7 @@ webhook is registered with `commercekings/module-rate-limit`: a limited inbound 
 
 ## More
 
-[How it works](docs/how-it-works.md) · [Compatibility](COMPATIBILITY.md) · [Changes](CHANGELOG.md) ·
+[How it works](docs/how-it-works.md) · [Provider API](docs/provider-api.md) · [Compatibility](COMPATIBILITY.md) · [Changes](CHANGELOG.md) ·
 [Notification: Messaging](https://github.com/commercekings/module-notification/blob/main/docs/module-authors.md#messaging)
 
 ## Disclaimer
