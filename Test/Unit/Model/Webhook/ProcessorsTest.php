@@ -123,15 +123,64 @@ class ProcessorsTest extends TestCase
         $this->assertNull($this->report(['to' => '381601234567', 'status' => ['groupName' => 'EXPIRED']]));
         $this->assertNull($this->report(['to' => '381601234567', 'status' => ['groupName' => 'UNDELIVERABLE'],
             'error' => ['name' => 'EC_UNKNOWN_ERROR', 'permanent' => false]]), 'a temporary failure');
+        $this->assertNull($this->report(['to' => '381601234567', 'status' => ['groupName' => 'UNDELIVERABLE',
+            'name' => 'UNDELIVERABLE_NOT_DELIVERED'], 'error' => ['name' => 'EC_ABSENT_SUBSCRIBER', 'permanent' => false]],
+            'viber'), 'switched off or out of coverage: temporary');
         $this->assertSame(StopListInterface::REASON_UNDELIVERABLE, $this->report(['to' => '381601234567',
             'status' => ['groupName' => 'UNDELIVERABLE', 'name' => 'UNDELIVERABLE_NOT_DELIVERED'],
-            'error' => ['name' => 'EC_ABSENT_SUBSCRIBER', 'permanent' => true]], 'viber'));
+            'error' => ['name' => 'EC_UNKNOWN_SUBSCRIBER', 'permanent' => true]], 'viber'));
         $this->assertSame(StopListInterface::REASON_REPLY, $this->report(['to' => '381601234567',
-            'status' => ['groupName' => 'REJECTED', 'name' => 'REJECTED_DESTINATION_BLOCKED']], 'whatsapp'));
+            'status' => ['groupName' => 'REJECTED', 'name' => 'REJECTED_NETWORK'],
+            'error' => ['name' => 'EC_MARKETING_OPT_OUT', 'permanent' => true]], 'whatsapp'));
         $this->assertSame([['stop', 'viber', '+381601234567', StopListInterface::REASON_UNDELIVERABLE],
             ['stop', 'whatsapp', '+381601234567', StopListInterface::REASON_REPLY]], $this->calls);
         $this->assertNull($this->report(['to' => '12', 'status' => ['groupName' => 'UNDELIVERABLE'],
-            'error' => ['permanent' => true]]));
+            'error' => ['name' => 'EC_UNKNOWN_SUBSCRIBER', 'permanent' => true]]));
         $this->assertCount(1, $this->warnings);
+    }
+
+    /** The trial's real report: the shop's demo whitelist, not the shopper's number. */
+    public function testTheDemoWhitelistErrorStopsNobodyAndIsLoggedWithoutTheNumber(): void
+    {
+        $this->assertNull($this->report(['to' => '381611234567', 'status' => ['groupId' => 5, 'groupName' => 'REJECTED',
+            'id' => 18, 'name' => 'REJECTED_DESTINATION_NOT_REGISTERED'], 'error' => ['groupId' => 3,
+            'groupName' => 'OPERATOR_ERRORS', 'id' => 579, 'name' => 'EC_DEST_ADDRESS_NOT_IN_SMS_DEMO', 'permanent' => true]]));
+        $this->assertSame([], $this->calls);
+        $this->assertSame(['CommerceKings_NotificationInfobip: a message failed (REJECTED_DESTINATION_NOT_REGISTERED /'
+            . ' EC_DEST_ADDRESS_NOT_IN_SMS_DEMO); no number was suppressed.'], $this->infos);
+    }
+
+    public function testAnUnknownSubscriberIsSuppressedAndAnExplicitOptOutIsAReply(): void
+    {
+        $this->assertSame(StopListInterface::REASON_UNDELIVERABLE, $this->report(['to' => '381611234567',
+            'status' => ['groupName' => 'UNDELIVERABLE', 'name' => 'UNDELIVERABLE_NOT_DELIVERED'],
+            'error' => ['name' => 'EC_UNKNOWN_SUBSCRIBER', 'permanent' => true]]));
+        $this->assertSame(StopListInterface::REASON_REPLY, $this->report(['to' => '381611234567',
+            'status' => ['groupName' => 'UNDELIVERABLE', 'name' => 'UNDELIVERABLE_NOT_DELIVERED'],
+            'error' => ['name' => 'EC_CONTENT_BLOCKED', 'permanent' => true]]));
+        $this->assertSame(StopListInterface::REASON_REPLY, $this->report(['to' => '381611234567',
+            'status' => ['groupName' => 'UNDELIVERABLE'], 'error' => ['name' => 'EC_BLOCKED_USER', 'permanent' => true]], 'viber'));
+        $this->assertSame([['stop', 'sms', '+381611234567', StopListInterface::REASON_UNDELIVERABLE],
+            ['stop', 'sms', '+381611234567', StopListInterface::REASON_REPLY],
+            ['stop', 'viber', '+381611234567', StopListInterface::REASON_REPLY]], $this->calls);
+    }
+
+    public function testAccountSenderAndNetworkErrorsStopNobodyEvenWhenPermanent(): void
+    {
+        foreach ([
+            ['REJECTED_NOT_ENOUGH_CREDITS', 'EC_MONTHLY_LIMIT_REACHED'], ['REJECTED_SOURCE', 'EC_INVALID_SOURCE_ADDRESS'],
+            ['REJECTED_SENDER', 'EC_BLACKLISTED_SENDERADDRESS'], ['REJECTED_ROUTE_NOT_AVAILABLE', 'EC_ACCOUNT_ACCESS_DENIED'],
+            ['REJECTED_DESTINATION_BLOCKLISTED', 'EC_BLACKLISTED_DESTINATIONADDRESS'], ['REJECTED_NETWORK', 'EC_SENDER_NOT_REGISTERED'],
+            ['REJECTED_NETWORK', 'EC_INVALID_TEMPLATE'], ['UNDELIVERABLE_REJECTED_OPERATOR', 'EC_MOBILE_OPERATOR_NETWORK_ERROR'],
+            ['REJECTED_SOMETHING_NEW', 'EC_SOMETHING_NEW'],
+        ] as [$status, $error]) {
+            $this->assertNull($this->report(['to' => '381611234567', 'status' => ['groupName' => 'REJECTED', 'name' => $status],
+                'error' => ['name' => $error, 'permanent' => true]]), "$status / $error");
+        }
+        $this->assertSame([], $this->calls);
+        $this->assertCount(9, $this->infos);
+        foreach ($this->infos as $line) {
+            $this->assertStringNotContainsString('381611234567', $line);
+        }
     }
 }

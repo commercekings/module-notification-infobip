@@ -18,7 +18,8 @@ use Magento\Store\Model\ScopeInterface;
  * WhatsApp template (by notification type and locale) with its variables. Infobip's channel failover is never asked
  * for - a message falling back to another channel would skip that channel's stop list, consent and quiet hours. Each
  * message asks for the delivery report webhook, which reports late failures. A refusal because the person blocked or
- * opted out of this sender is their opt-out: the stop list learns it, then the send fails as refused.
+ * opted out of this sender is their opt-out, one because the number cannot receive suppresses it (ErrorCodes); the
+ * send fails as refused either way.
  */
 class MessageSender
 {
@@ -29,9 +30,6 @@ class MessageSender
         Channel::VIBER => '/viber/2/messages',
     ];
 
-    /** Parts of Infobip status or error names that mean the person blocked or opted out of the sender. */
-    public const OPTED_OUT = ['BLOCK', 'OPT_OUT', 'OPTOUT', 'OPTED_OUT', 'UNSUBSCRIB'];
-
     public function __construct(
         private readonly Config $config,
         private readonly InfobipClient $client,
@@ -40,18 +38,6 @@ class MessageSender
         private readonly StopListInterface $stopList,
         private readonly ScopeConfigInterface $scopeConfig
     ) {
-    }
-
-    /** Is this Infobip status or error name the person's opt-out (blocked the sender, unsubscribed)? */
-    public static function isOptOut(string $name): bool
-    {
-        $name = strtoupper($name);
-        foreach (self::OPTED_OUT as $part) {
-            if ($name !== '' && str_contains($name, $part)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public function send(Delivery $delivery, DeliveryContent $content): void
@@ -81,8 +67,10 @@ class MessageSender
             $this->client->send($this->config->getBaseUrl($storeId), $this->config->getApiKey($storeId),
                 self::PATHS[$channel], ['messages' => [$message]]);
         } catch (InfobipException $error) {
-            if (self::isOptOut($error->getInfobipName())) {
-                $this->stopList->stop($channel, $delivery->recipient, StopListInterface::REASON_REPLY);
+            // only the person's opt-out or a number that cannot receive; account, sender or demo refusals stop nobody
+            $reason = ErrorCodes::reason($error->getInfobipName());
+            if ($reason !== null) {
+                $this->stopList->stop($channel, $delivery->recipient, $reason);
             }
             throw $error;
         }

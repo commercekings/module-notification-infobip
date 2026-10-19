@@ -39,7 +39,7 @@ use Psr\Log\NullLogger;
 /**
  * Infobip through Notification's real sender, stop list and normalizer on a real database, with a stub HTTP client (no
  * call reaches Infobip): an SMS goes out in Infobip's form, a STOP reply stops the number so the next marketing message
- * is dropped, START lifts it, a permanent failure suppresses it, and a timeout counts as sent.
+ * is dropped, START lifts it, an unknown number suppresses it, and a timeout counts as sent.
  */
 class InfobipTest extends TestCase
 {
@@ -125,7 +125,7 @@ class InfobipTest extends TestCase
     public function testAPermanentFailureSuppressesTheNumberOnItsChannel(): void
     {
         $this->om->create(ReportProcessor::class)->process(['results' => [['to' => '381601234560',
-            'status' => ['groupName' => 'UNDELIVERABLE'], 'error' => ['name' => 'EC_ABSENT_SUBSCRIBER', 'permanent' => true]]]],
+            'status' => ['groupName' => 'UNDELIVERABLE'], 'error' => ['name' => 'EC_UNKNOWN_SUBSCRIBER', 'permanent' => true]]]],
             'viber');
         $stopList = $this->om->get(StopListInterface::class);
         $this->assertSame(StopListInterface::REASON_UNDELIVERABLE, $stopList->getReason(Channel::VIBER, self::NUMBER));

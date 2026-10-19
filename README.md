@@ -61,8 +61,9 @@ the old URLs: enter the new ones in Infobip. Use HTTPS, and keep the URLs out of
 |---|---|---|
 | inbound | STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT, REVOKE, OPTOUT; WhatsApp "Stop promotions"; Viber unsubscribed | `stop(…, REASON_REPLY)` – lifts only by START |
 | inbound | START, UNSTOP, YES; Viber subscribed | `resume()` – removed subscriptions do not come back |
-| report | blocked / opted out (status or error name) | `stop(…, REASON_REPLY)` |
-| report | failed with a permanent error (unknown number, landline, no account on the channel) | `stop(…, REASON_UNDELIVERABLE)` – keeps consents, lifts after the configured days |
+| report | an explicit opt-out (e.g. `EC_CONTENT_BLOCKED`, `EC_BLOCKED_USER`, `EC_MARKETING_OPT_OUT`; `Model\ErrorCodes`) | `stop(…, REASON_REPLY)` |
+| report | the number cannot receive (unknown number, landline, no account on the channel; `Model\ErrorCodes`) | `stop(…, REASON_UNDELIVERABLE)` – keeps consents, lifts after the configured days |
+| report | the shop's account, sender, credit or demo whitelist, network errors, unknown names | nothing; the status and error names are logged |
 | report | delivered, pending, expired, temporary errors | nothing |
 
 A number without "+" gets one; a number Notification cannot take is logged (without the number) and answered 200 –
@@ -88,8 +89,8 @@ webhook is registered with `commercekings/module-rate-limit`: a limited inbound 
   `/viber/2/messages`) are built from Infobip's documentation; the tests use a stub client and never call Infobip.
   Check them against your account before going live.
 - Free-form WhatsApp messages (inside the 24-hour service window) are not sent: templates only.
-- The opt-out names in delivery reports are matched by part (`BLOCK`, `OPT_OUT`, `UNSUBSCRIB`, …); a name Infobip adds
-  later may need adding.
+- Opt-outs and undeliverable numbers are recognized by Infobip's documented names only (`Model\ErrorCodes`); a name
+  Infobip adds later stops nobody until it is added.
 
 ## More
 

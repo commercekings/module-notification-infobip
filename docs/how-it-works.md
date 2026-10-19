@@ -14,7 +14,8 @@ Start with the [README](../README.md).
   `Delivery::$templateId`), its placeholders from `DeliveryContent::$vars` in the mapped order. The number goes to
   Infobip without "+". Every message asks for the delivery report (its `notifyUrl` / Viber `webhooks.delivery.url`).
   No failover is ever requested. A refusal naming an opt-out (the person blocked the sender) stops the number
-  (`REASON_REPLY`) before the error goes back to the sender.
+  (`REASON_REPLY`), one naming a number that cannot receive suppresses it (`REASON_UNDELIVERABLE`), before the error
+  goes back to the sender; account, sender and demo refusals stop nobody (`Model\ErrorCodes`).
 - **`Model\Http\InfobipClient`**: `Authorization: App <key>`, JSON. Infobip refusing the request, or rejecting the
   message (status group `REJECTED`) in an accepted one, is `Exception\InfobipException` (nothing sent); a failure
   cURL proves came before the request left (host not found, connection refused, TLS, a timeout before any transfer)

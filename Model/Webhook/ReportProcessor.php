@@ -4,14 +4,15 @@ declare(strict_types=1);
 namespace CommerceKings\NotificationInfobip\Model\Webhook;
 
 use CommerceKings\Notification\Api\StopListInterface;
-use CommerceKings\NotificationInfobip\Model\MessageSender;
+use CommerceKings\NotificationInfobip\Model\ErrorCodes;
 use Psr\Log\LoggerInterface;
 
 /**
  * Delivery reports ({"results": […]}): a message the person blocked or opted out of is their opt-out
- * (StopListInterface::REASON_REPLY); one that failed for good - Infobip marks the error permanent (an unknown or
- * absent number, a landline, no account on the channel) - suppresses the number (REASON_UNDELIVERABLE: its consents
- * stay, it lifts after the configured days). Delivered, pending, expired and temporary failures change nothing.
+ * (StopListInterface::REASON_REPLY); one the number cannot receive (unknown number, a landline, no account on the
+ * channel) suppresses the number (REASON_UNDELIVERABLE: its consents stay, it lifts after the configured days) - see
+ * ErrorCodes. Any other failure (the shop's account, sender, demo whitelist, network, a temporary one) only logs its
+ * status and error names; delivered, pending and expired messages change nothing.
  */
 class ReportProcessor
 {
@@ -64,9 +65,12 @@ class ReportProcessor
         if (!in_array(strtoupper((string)($status['groupName'] ?? '')), self::FAILED_GROUPS, true)) {
             return null;
         }
-        if (MessageSender::isOptOut((string)($status['name'] ?? '')) || MessageSender::isOptOut((string)($error['name'] ?? ''))) {
-            return StopListInterface::REASON_REPLY;
+        $reason = ErrorCodes::reason((string)($status['name'] ?? ''), (string)($error['name'] ?? ''));
+        if ($reason === null) {
+            // the shop's account, sender, demo whitelist, network, … or a temporary failure: the number is not to blame
+            $this->logger->info(sprintf('CommerceKings_NotificationInfobip: a message failed (%s / %s); no number was'
+                . ' suppressed.', (string)($status['name'] ?? '-'), (string)($error['name'] ?? '-')));
         }
-        return ($error['permanent'] ?? false) === true ? StopListInterface::REASON_UNDELIVERABLE : null;
+        return $reason;
     }
 }

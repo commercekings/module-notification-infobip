@@ -10,6 +10,7 @@ use CommerceKings\Notification\Api\StopListInterface;
 use CommerceKings\NotificationInfobip\Exception\InfobipException;
 use CommerceKings\NotificationInfobip\Model\Config;
 use CommerceKings\NotificationInfobip\Model\Http\InfobipClient;
+use CommerceKings\NotificationInfobip\Model\ErrorCodes;
 use CommerceKings\NotificationInfobip\Model\MessageSender;
 use CommerceKings\NotificationInfobip\Model\TemplateMap;
 use CommerceKings\NotificationInfobip\Model\Webhook\WebhookAuth;
@@ -122,7 +123,7 @@ class MessageSenderTest extends TestCase
     /** Refused because the person blocked or opted out of the sender: their opt-out, then the send fails. */
     public function testAnOptOutRefusalStopsTheNumber(): void
     {
-        $this->failure = new InfobipException('rejected', 'REJECTED_DESTINATION_BLOCKED', 200);
+        $this->failure = new InfobipException('rejected', 'REJECTED_DND', 200);
         try {
             $this->sender()->send($this->text(Channel::SMS), new DeliveryContent([], text: 'Hi'));
             $this->fail('Expected the refusal');
@@ -131,15 +132,19 @@ class MessageSenderTest extends TestCase
         $this->assertSame([[Channel::SMS, '+381601234567', StopListInterface::REASON_REPLY]], $this->stops);
     }
 
-    public function testAnotherRefusalStopsNothing(): void
+    public function testAnInvalidNumberIsSuppressedButAccountOrDemoRefusalsStopNobody(): void
     {
-        $this->failure = new InfobipException('rejected', 'REJECTED_NOT_ENOUGH_CREDITS', 200);
-        try {
-            $this->sender()->send($this->text(Channel::SMS), new DeliveryContent([], text: 'Hi'));
-            $this->fail('Expected the refusal');
-        } catch (InfobipException) {
+        foreach (['REJECTED_DESTINATION' => StopListInterface::REASON_UNDELIVERABLE, 'REJECTED_NOT_ENOUGH_CREDITS' => null,
+            'REJECTED_DESTINATION_NOT_REGISTERED' => null, 'REJECTED_SOURCE' => null, 'UNAUTHORIZED' => null, '' => null] as $name => $reason) {
+            $this->stops = [];
+            $this->failure = new InfobipException('rejected', $name, 200);
+            try {
+                $this->sender()->send($this->text(Channel::SMS), new DeliveryContent([], text: 'Hi'));
+                $this->fail('Expected the refusal');
+            } catch (InfobipException) {
+            }
+            $this->assertSame($reason === null ? [] : [[Channel::SMS, '+381601234567', $reason]], $this->stops, $name);
         }
-        $this->assertSame([], $this->stops);
     }
 
     public function testNothingIsSentWithoutASenderATextOrOnAnotherChannel(): void
@@ -159,13 +164,19 @@ class MessageSenderTest extends TestCase
         $this->assertSame([], $this->calls);
     }
 
-    public function testOptOutNames(): void
+    public function testOnlyDocumentedNamesCountNeverASubstring(): void
     {
-        foreach (['REJECTED_DESTINATION_BLOCKED', 'EC_OPT_OUT', 'USER_UNSUBSCRIBED', 'blocked'] as $name) {
-            $this->assertTrue(MessageSender::isOptOut($name), $name);
+        foreach (['EC_CONTENT_BLOCKED', 'ec_blocked_user', ' EC_MARKETING_OPT_OUT ', 'REJECTED_DND'] as $name) {
+            $this->assertSame(StopListInterface::REASON_REPLY, ErrorCodes::reason($name), $name);
         }
-        foreach (['', 'REJECTED_NOT_ENOUGH_CREDITS', 'EC_ABSENT_SUBSCRIBER', 'DELIVERED_TO_HANDSET'] as $name) {
-            $this->assertFalse(MessageSender::isOptOut($name), $name);
+        foreach (['EC_UNKNOWN_SUBSCRIBER', 'EC_UNKNOWN_USER', 'REJECTED_PREFIX_MISSING'] as $name) {
+            $this->assertSame(StopListInterface::REASON_UNDELIVERABLE, ErrorCodes::reason($name), $name);
         }
+        foreach (['', 'BLOCKED', 'EC_OPT_OUT', 'USER_UNSUBSCRIBED', 'REJECTED_DESTINATION_BLOCKED', 'EC_BLACKLISTED_SENDERADDRESS',
+            'EC_DEST_ADDRESS_NOT_IN_SMS_DEMO', 'EC_ABSENT_SUBSCRIBER', 'DELIVERED_TO_HANDSET'] as $name) {
+            $this->assertNull(ErrorCodes::reason($name), $name);
+        }
+        $this->assertSame(StopListInterface::REASON_REPLY, ErrorCodes::reason('EC_UNKNOWN_SUBSCRIBER', 'EC_BLOCKED_USER'),
+            'an opt-out wins');
     }
 }
