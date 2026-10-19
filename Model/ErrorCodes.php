@@ -12,7 +12,7 @@ use CommerceKings\Notification\Api\StopListInterface;
  * (REASON_UNDELIVERABLE). Everything else - the shop's account, sender, credit, demo whitelist, routes, network or
  * an unknown name - stops nobody: the shop has to fix it, and the send just fails.
  */
-final class ErrorCodes
+class ErrorCodes
 {
     /** The person blocked or opted out of the sender (explicit names only, never a substring). */
     public const OPT_OUT = [

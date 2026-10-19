@@ -51,7 +51,9 @@ class WebhookUrls extends Field
             return (int)$request->getParam('store');
         }
         $website = $request->getParam('website');
-        $website = $website ? $this->stores->getWebsite((int)$website) : $this->stores->getDefaultStoreView()?->getWebsite();
+        $default = $this->stores->getDefaultStoreView();
+        $website = $website ? $this->stores->getWebsite((int)$website)
+            : ($default ? $this->stores->getWebsite((int)$default->getWebsiteId()) : null);
         return $website ? (int)$this->stores->getGroup((string)$website->getDefaultGroupId())->getDefaultStoreId() : 0;
     }
 }
