@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 - unreleased
+## 0.1.1 - 2026-10-20
 
 - **Fixed:** a duplicate opt-in confirmation message that loses the claim no longer deletes the pending retry of the
   one that is sending it (or gave it back to retry after a refusal): the pending row ends only when the number's
