@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 - unreleased
+
+- **Fixed:** a duplicate opt-in confirmation message that loses the claim no longer deletes the pending retry of the
+  one that is sending it (or gave it back to retry after a refusal): the pending row ends only when the number's
+  confirmation is complete. Before, that confirmation could silently never be sent.
+
 ## 0.1.0 - 2026-10-19
 
 First release. Requires Magento 2.4.4 or later (`magento/framework ^103.0.4`) and `commercekings/module-notification`;

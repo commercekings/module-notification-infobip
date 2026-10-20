@@ -65,8 +65,13 @@ class Confirmation implements NotificationTypeInterface
             'queued_at' => new Expression('NOW()'), 'delivery_version' => new Expression('delivery_version + 1')],
             array_merge($this->state->keyCondition(self::TYPE, $contactId), ['sent_at IS NULL']));
         if (!$claimed) {
-            $this->pending->done($subscriptionId);
-            return; // already confirmed (or another worker is sending it)
+            // already confirmed: this subscription's pending row is done. Another worker still sending it, or one
+            // that gave it back to retry: that row is its retry - leave it, or the confirmation is never sent
+            $row = $this->state->load(self::TYPE, $contactId);
+            if ($row !== null && $row['sent_at'] !== null && $row['queued_at'] === null) {
+                $this->pending->done($subscriptionId);
+            }
+            return;
         }
         $storeId = $subscription->storeId;
         $store = $this->config->getStoreName($storeId);

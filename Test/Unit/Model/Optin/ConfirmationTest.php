@@ -34,6 +34,8 @@ class ConfirmationTest extends TestCase
     private bool $waiting = false;
     private bool $retriesLeft = true;
     private array $errors = [];
+    /** the number's confirmation row as a lost claim reads it: confirmed (sent, not sending) by default */
+    private ?array $stateRow = ['sent_at' => '2026-10-18 10:00:00', 'queued_at' => null];
     private array $recipient = ['channel' => 'sms', 'recipient' => '+381601234567'];
 
     protected function setUp(): void
@@ -48,6 +50,7 @@ class ConfirmationTest extends TestCase
         $repository->method('getRecipient')->willReturnCallback(fn () => $this->recipient);
         $state = $this->createStub(DeliveryStateInterface::class);
         $state->method('getTableName')->willReturn('ck_notification_delivery_state');
+        $state->method('load')->willReturnCallback(fn () => $this->stateRow);
         $state->method('keyCondition')->willReturnCallback(fn ($type, $id) => ['type = ?' => $type, 'reference_id = ?' => $id, "subject_key = ''"]);
         $sender = $this->createStub(SenderInterface::class);
         $sender->method('send')->willReturnCallback(function (Delivery $delivery) {
@@ -112,6 +115,24 @@ class ConfirmationTest extends TestCase
         $this->process();
         $this->assertSame([], $this->deliveries);
         $this->assertSame([['done', 7], ['done', 7]], $this->pending);
+    }
+
+    /**
+     * A duplicate that loses the claim while the owner is still sending (or after the owner gave it back to retry)
+     * must not end the pending row: that row is the owner's retry, and without it the confirmation is never sent.
+     */
+    public function testALostClaimEndsThePendingRowOnlyWhenTheConfirmationIsComplete(): void
+    {
+        $this->claimResult = 0;
+        foreach (['the owner is sending' => ['sent_at' => '2026-10-18 10:00:00', 'queued_at' => '2026-10-18 10:00:00'],
+            'the owner gave it back to retry' => ['sent_at' => null, 'queued_at' => null],
+            'no row' => null] as $case => $row) {
+            $this->stateRow = $row;
+            $this->updates = []; // the claim is the first update: refused
+            $this->process();
+            $this->assertSame([], $this->pending, $case . ': the pending row stays');
+        }
+        $this->assertSame([], $this->deliveries);
     }
 
     public function testADuplicateBeforeTheScheduledRetryLeavesItToTheRetry(): void
